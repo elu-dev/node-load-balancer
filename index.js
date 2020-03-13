@@ -1,12 +1,15 @@
-// require('dotenv').config()
 const express = require('express')
 const request = require('request')
 const createServer = require('./server')
 
 // initialize the servers
 const servers = []
+let current_server = 0
 for (let i = 0; i < 4; ++i) {
-    const server = createServer()
+
+    const slow = false // if true, creates a slow server
+
+    const server = createServer(slow)
     const port = 3000 + i
     const address = `http://localhost:${port}`
 
@@ -15,15 +18,13 @@ for (let i = 0; i < 4; ++i) {
     servers.push({server, address})
 }
 
-let current_server = 0
-
 /**
  * switches across the list of servers
  * to balance their workload by pipping
  * the request data to the response
  */
 const balancer = (req, res) => {
-    console.log(`request sent to server ${current_server}`)
+    console.log(`request sent to server ${current_server}:`, req.method, req.url, req.body || '')
     req.pipe(request({ url: servers[current_server].address + req.url })).pipe(res)
     current_server = ++current_server % servers.length
 }

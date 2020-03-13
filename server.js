@@ -1,10 +1,17 @@
 const express = require('express')
 
-// HANDLERS
-const mainPage = (slow = false) => (req, res) => {
-    if (slow) setTimeout(() => res.setStatus(200).send('./pages/index.html'), 2000)
-    else res.send('./pages/index.html')
+const delayMiddleware = slow => (req, res, next) => {
+    if (slow) setTimeout(next, 1000)
+    else next()
 }
 
+const mainPage = (req, res) => {
+    res.sendFile(__dirname + '/pages/index.html')
+}
 
-module.exports = (slow = false) => express().get('/', mainPage(slow))
+const pageResources = (req, res) => res.sendFile(__dirname + req.url)
+
+module.exports = (slow = false) => express()
+                                        .use(delayMiddleware(slow))
+                                        .get('/', mainPage)
+                                        .get('/pages/*', pageResources)
